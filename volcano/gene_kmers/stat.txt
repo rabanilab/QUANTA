@@ -1,0 +1,6 @@
+24252	3utr_seqs.all
+20889	3utr_seqs.ensembl.longest
+68924	3utr_seqs.ensembl
+24007	3utr_seqs.genes
+16114	3utr_seqs.refseq.longest
+16901	3utr_seqs.refseq
