@@ -1,0 +1,71 @@
+filter_length:
+	cat $(f).txt \
+	| perl -e 'while(<STDIN>){chomp $$_;@l=split("\t",$$_);if(length($$h{$$l[0]})<length($$l[3])){$$h{$$l[0]}=$$l[3];$$u{$$l[0]}=$$l[1]."\t".$$l[2]}}foreach $$k(keys %h){print "$$k\t$$u{$$k}\t$$h{$$k}\n"}' \
+	> $(f).longest.txt;
+
+refseq_conv:
+	cat Downloads/biomart_ENS_to_Refseq.txt \
+	| body.pl 2 -1 \
+	| cut.pl -f 3,1,2 \
+	| grep -E -v "^\t" \
+	| sort \
+	| uniq \
+	> c1; \
+	cat Downloads/biomart_ENS_to_Refseq.txt \
+	| body.pl 2 -1 \
+	| cut.pl -f 4,1,2 \
+	| grep -E -v "^\t" \
+	| sort \
+	| uniq \
+	> c2; \
+	cat c1 > conv.txt; \
+	join.pl -neg c2 c1 -1 2,3 -2 2,3 | cut.pl -f 3,1,2 >> conv.txt; \
+	rm -rf c1 c2;
+
+refseq_3utr:
+	cat Downloads/ucsc.refseq_curated.fa \
+	| fasta2stab.pl \
+	| sed 's/ .*\t/\t/g' \
+	| sed 's/danRer11_ncbiRefSeqCurated_//g' \
+	| sort \
+	| uniq \
+	| sed 's/\.[0-9]*\t/\t/g' \
+	| join.pl conv.txt - \
+	| cut.pl -f 2,3,1,4 \
+	> 3utr_seqs.refseq.txt; \
+	make filter_length f=3utr_seqs.refseq;
+
+ensembl_3utr:
+	cat Downloads/biomart_GRCz11_3UTR_ensembl103.fasta \
+	| fasta2stab.pl \
+	| grep -v SEQUENCEUNAVAILABLE \
+	| tr "|" "\t" \
+	| cut -f 1,3,5,6 \
+	| sort \
+	| uniq \
+	> 3utr_seqs.ensembl.txt;
+	make filter_length f=3utr_seqs.ensembl;
+
+MIN_LEN = 8
+all_3utr:
+	cat 3utr_seqs.ensembl.longest.txt \
+	| cut -f 1,3 \
+	| join.pl 3utr_seqs.refseq.longest.txt - -o NA \
+	| cut.pl -f 1,3,5,4 \
+	> 3utr_seqs.all.txt; \
+	join.pl -neg 3utr_seqs.ensembl.longest.txt 3utr_seqs.refseq.longest.txt \
+	| cut -f 1,3,4 \
+	| add_column.pl -c 1 -s NA \
+	>> 3utr_seqs.all.txt; \
+	\
+	cat 3utr_seqs.all.txt \
+	| cut -f 4 \
+	| tr -d "N" \
+	| paste 3utr_seqs.all.txt - \
+	| cut -f 1,5 \
+	| stab2length.pl \
+	| filter.pl -c 1 -min $(MIN_LEN) \
+	| cut -f 1 \
+	| join.pl - 3utr_seqs.all.txt \
+	| cut -f 1,4 \
+	> 3utr_seqs.genes.txt;
