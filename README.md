@@ -29,19 +29,8 @@ TBD
 
 ## Example data for kinetic analysis
 
-The example data directory (data_files) contains FPKM counts from multiple
-temporal zebrafish datasets that were already downloaded and quantified.
-
-Datasets:
-
-```
-Medina et. al., 2021 (polyA and total-RNA)
-Meier et. al., 2018 (total-RNA)
-Zhao et. al., 2017 (total-RNA)
-Pauli et. al., 2011 (polyA-RNA)
-Harvey et. al., 2013 (polyA-RNA)
-Yang et. al., 2019 (polyA-RNA)
-```
+The example data directory (data_files) contains FPKM counts from two temporal zebrafish datasets 
+(Medina et. al., 2021) that were already downloaded and quantified.
 
 To run the example, simply type within matlab:
 
