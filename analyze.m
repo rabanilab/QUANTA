@@ -8,8 +8,8 @@ addpath('volcano');
 addpath('misc');
 
 % data
-all_data_r = {'Medina2021_ribo' 'Zhao2017' 'Meier2018'};
-all_data_a = {'Medina2021_polya' 'Yang2019' 'Pauli2011' 'Harvey2013'};
+all_data_r = {'Medina2021_ribo'}
+all_data_a = {'Medina2021_polya'}
 all_data_c = all_data_r;
 mzt_class = 3.5;
 mzt_fit = [2 6 6]; % [min dg onset time; 2p model only] [max dg onset time] [min dg offset time]
@@ -23,7 +23,7 @@ mkdir('results');
 % ---------------------------------------------------------------------
 % create kmer counts data
 % ---------------------------------------------------------------------
-kmer_run = 0;
+kmer_run = 1;
 
 if (kmer_run)
     parfor k = 1:7
