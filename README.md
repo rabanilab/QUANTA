@@ -6,13 +6,13 @@ and quantitatively dissect the interconnected kinetics of their mRNA polyadenyla
 
 You can find the full description in:
 
-[A comparative analysis across species of maternal mRNA regulation in embryos](https://www.ncbi.nlm.nih.gov/pubmed/29727622).
+[A comparative analysis across species of maternal mRNA regulation in embryos using QUANTA](https://www.ncbi.nlm.nih.gov/).
 Tawil M, Alcalay D, Greenberg P, Har-Sheffer S, Fishman L, Rabani M (2024). Submitted.
 
 
 ## Package Description and Prerequisites
 
-The first part of QUANTA analyzes FASTQ files to get FPKM counts per gene,
+The first part of QUANTA analyzes RNA-Seq data to get FPKM counts per gene,
 and is implemented in linux.
 
 The second part of QUANTA performs kinetic analysis,
@@ -22,7 +22,7 @@ We developed and tested QUANTA with Matlab R2023b. Matlab can be obtained and
 installed from [Mathworks](https://www.mathworks.com/products/matlab.html).
 
 
-## Example data for FASTQ file analysis
+## Example data for RNA-Seq analysis
 
 TBD
 
