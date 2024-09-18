@@ -24,7 +24,20 @@ installed from [Mathworks](https://www.mathworks.com/products/matlab.html).
 
 ## Example data for RNA-Seq analysis
 
-TBD
+To run the pre-processing you will need to make sure two external tools are installed on your machine:
+1. samtools (can be downloaded and installed from [https://www.htslib.org/download](https://www.htslib.org/download/).
+2. cufflinks (can be downloaded and installed from [https://cole-trapnell-lab.github.io/cufflinks](https://cole-trapnell-lab.github.io/cufflinks).
+
+Add a bam file to the installation directory in the "bam_files" directory.
+
+After installation, you can test the run by typing:
+```
+cd bam_analysis;
+make test_run;
+```
+
+This will run the FPKM quantification distinguishing pre-mRNA and mRNA on zebrafish data in the bam_flies directory.
+
 
 
 ## Example data for kinetic analysis
