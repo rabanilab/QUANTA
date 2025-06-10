@@ -55,7 +55,7 @@ mzt_fit = [];
 % ---------------------------------------------------------------------
 % FPKM data
 % ---------------------------------------------------------------------
-load_fpkm = 0;
+load_fpkm = 1;
 
 if (load_fpkm)
     F = importdata(list_file);
@@ -122,7 +122,7 @@ all_data_c
 % normalize expression by stable controls
 % select expressed genes by maximal expression
 % ---------------------------------------------------------------------
-norm_fpkm = 0;
+norm_fpkm = 1;
 
 if (norm_fpkm)
     load('data.fpkm.mat');
@@ -342,7 +342,7 @@ end
 % ---------------------------------------------------------------------
 % classification
 % ---------------------------------------------------------------------
-classify_genes = 0;
+classify_genes = 1;
 
 if (classify_genes)
     load('data.norm.mat');
@@ -490,7 +490,7 @@ end
 % ---------------------------------------------------------------------
 % combined classification
 % ---------------------------------------------------------------------
-class_plot = 0;
+class_plot = 1;
 
 if (class_plot == 1)
     S = {'M' 'Z' 'MZ'};
@@ -685,7 +685,7 @@ nmtid = size(mtid,1);
 % ---------------------------------------------------------------------
 % expression data: stable genes
 % ---------------------------------------------------------------------
-plot_controls = 0;
+plot_controls = 1;
 
 if (plot_controls)
     load('gene_classification.mat','allid');
@@ -736,7 +736,7 @@ end
 % ---------------------------------------------------------------------
 % expression data: plot examples
 % ---------------------------------------------------------------------
-plot_examples = 0;
+plot_examples = 1;
 
 if (plot_examples)
     load('gene_classification.mat','mtid','ztid','allid');
@@ -822,7 +822,7 @@ end
 % ---------------------------------------------------------------------
 % model fits
 % ---------------------------------------------------------------------
-model_fit = 0;
+model_fit = 1;
 
 if (model_fit == 1)
     load('gene_classification.mat','mtid');
@@ -866,7 +866,7 @@ end
 % ---------------------------------------------------------------------
 % test model fit
 % ---------------------------------------------------------------------
-test_model_fit = 0;
+test_model_fit = 1;
 
 if (test_model_fit)
     mkdir('results/model_fit');
@@ -1047,7 +1047,7 @@ end
 % ---------------------------------------------------------------------
 % average model fits across datasets
 % ---------------------------------------------------------------------
-model_average = 0;
+model_average = 1;
 
 if (model_average == 1)
     load('maternal_param.mat','mtid','Pa','Pr','Ra','Rr','Ea','Er','Ja','Jr');
@@ -1508,7 +1508,7 @@ end
 % ---------------------------------------------------------------------
 % expression data: plot data
 % ---------------------------------------------------------------------
-plot_data = 0;
+plot_data = 1;
 
 if (plot_data)
     load('maternal_param.mat','mtid','Pa','Pr');
@@ -1678,7 +1678,7 @@ end
 % ---------------------------------------------------------------------
 % fold change
 % ---------------------------------------------------------------------
-plot_fold = 0;
+plot_fold = 1;
 
 if (plot_fold)
     load('maternal_param.avg.mat','mtid');
@@ -1964,7 +1964,7 @@ end
 % ---------------------------------------------------------------------
 % plot known kmers
 % ---------------------------------------------------------------------
-plot_kmer_known = 0;
+plot_kmer_known = 1;
 plot_kmer_known_individual_param = 0;
 
 if (plot_kmer_known)
