@@ -1,10 +1,10 @@
-function [W1,W2] = volcano_ks(gid,rates,kname,Krange,ESIZE,ALPHA,Kdir,e_lim,p_lim,MHcorrect)
+function [W1,W2,Ethr,W] = volcano_ks(gid,rates,kname,Krange,ESIZE,ALPHA,Kdir,e_lim,p_lim,MHcorrect)
 
 if (nargin < 4)
     Krange = 3:7;
 end
 if (nargin < 5)
-    ESIZE = 0.3;
+    ESIZE = 5;%0.3;
 end
 if (nargin < 6)
     ALPHA = 0.01;
@@ -22,4 +22,4 @@ if (nargin < 10)
     MHcorrect = 'fdr';
 end
 
-[W1,W2] = volcano_test(gid,rates,kname,Krange,ESIZE,ALPHA,Kdir,e_lim,p_lim,'ks',MHcorrect);
+[W1,W2,Ethr,W] = volcano_test(gid,rates,kname,Krange,ESIZE,ALPHA,Kdir,e_lim,p_lim,'ks',MHcorrect);

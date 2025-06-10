@@ -1,4 +1,4 @@
-function [W1,W2,Ethr,W] = volcano_test(gid,rates,kname,Krange,ESIZE,ALPHA,Kdir,e_lim,p_lim,test,MHcorrect)
+function [W1,W2,Ethr,W] = volcano_hyg(gid,labels,kname,Krange,ESIZE,ALPHA,Kdir,e_lim,p_lim,MHcorrect)
 % sequence kmer analysis:
 %   pvalue = difference of rate distribution between instances that contain each kmer and those that do not
 %   effect = fold difference in median rates (log) between instances that contain each kmer and those that do not
@@ -22,9 +22,6 @@ if (nargin < 9)
     p_lim = [0 30];
 end
 if (nargin < 10)
-    test = 'ks';
-end
-if (nargin < 11)
     MHcorrect = 'fdr';
 end
 
@@ -35,17 +32,13 @@ Q2 = [];
 C = [];
 E = [];
 for k = Krange
-    [e,p1,p2,c1,Xrows] = kmer_pvalue(k, gid, rates, kname, Kdir, test);
+    [e,p1,p2,c1,Xrows] = kmer_pvalue(k, gid, labels, kname, Kdir);
     Yrows = [Yrows; Xrows];
     Q1 = [Q1 p1];
     Q2 = [Q2 p2];
     C = [C c1];
     E = [E e];
 end
-
-% adjust pvalues by effect size
-Q1(E>0) = 1;
-Q2(E<0) = 1;
 
 % multiple hypothesis corrections
 if (strcmp(MHcorrect,'bf'))
@@ -66,32 +59,32 @@ Ethr = prctile(abs(E),100-ESIZE);
 W = [Yrows num2cell([Q1;Q2;C;E])'];
 
 i = (Q1<ALPHA);
-write_text_file([kname '.' test '.smaller.txt'],sortrows(W(i,:),2));
+write_text_file([kname '.hyg.smaller.txt'],sortrows(W(i,:),2));
 W1 = W(i,:);
 i = (Q1<ALPHA).*(E<=-1*Ethr)==1;
-write_text_file([kname '.' test '.e.smaller.txt'],sortrows(W(i,:),2));
+write_text_file([kname '.hyg.e.smaller.txt'],sortrows(W(i,:),2));
 
 i = (Q2<ALPHA);
-write_text_file([kname '.' test '.larger.txt'],sortrows(W(i,:),3));
+write_text_file([kname '.hyg.larger.txt'],sortrows(W(i,:),3));
 W2 = W(i,:);
 i = (Q2<ALPHA).*(E>=Ethr)==1;
-write_text_file([kname '.' test '.e.larger.txt'],sortrows(W(i,:),3));
+write_text_file([kname '.hyg.e.larger.txt'],sortrows(W(i,:),3));
 
 h = plot_volcano(E,Q1,Q2,Yrows,ALPHA,Ethr,0,e_lim,p_lim);
-xlabel('effect size (SMD)');
+xlabel('effect size (%)');
 axis square;
 set(gcf, 'PaperUnits', 'centimeters');
 set(gcf, 'PaperPosition', [0 0 10 10]); % x_width=10cm y_width=10cm
-print([kname '.' test '.all.png'],'-dpng','-r300');
-%saveas(h, [kname '.' test '.all.jpg'],'jpg');
+print([kname '.hyg.all.png'],'-dpng','-r300');
+%saveas(h, [kname '.hyg.all.jpg'],'jpg');
 h = plot_volcano(E,Q1,Q2,Yrows,ALPHA,Ethr,50,e_lim,p_lim);
-xlabel('effect size (SMD)');
-saveas(h, [kname '.' test '.all_seq.jpg'],'jpg');
-%saveas(h, [kname '.' test '.all_seq.svg'],'svg');
+xlabel('effect size (%)');
+saveas(h, [kname '.hyg.all_seq.jpg'],'jpg');
+%saveas(h, [kname '.hyg.all_seq.svg'],'svg');
 close all;
 
 
-function [e,p1,p2,c,Xrows] = kmer_pvalue(k, gid, rates, kname, SEQ_COUNT_DIR, test)
+function [e,p1,p2,c,Xrows] = kmer_pvalue(k, gid, labels, kname, SEQ_COUNT_DIR)
 
 load([SEQ_COUNT_DIR '/kmers_counts.' num2str(k) '.mat'],'X','Xcols','Xrows');
 Xcols = regexprep(Xcols,'.*;','');
@@ -101,7 +94,7 @@ fprintf('loaded data for k=%d: %d ids, %d kmers\n',k,size(X,2),size(X,1));
 Xcols = Xcols(j1);
 X = X(:,j1);
 gid = gid(j2(j2>0),:);
-rates = rates(j2(j2>0),:);
+labels = labels(j2(j2>0),:);
 
 i1 = full(sum(X,2)) > 0;
 X = X(i1,:);
@@ -110,23 +103,22 @@ Xrows = Xrows(i1);
 i2 = full(sum(X,1)) > 0;
 X = X(:,i2);
 gid = gid(i2);
-rates = rates(i2);
+labels = labels(i2);
 
 fprintf('selected data for k=%d: %d ids, %d kmers\n',k,size(X,2),size(X,1));
 min_test = 10;
 
-if (exist([kname '.' num2str(k) test '.mat'],'file'))
-    load([kname '.' num2str(k) test '.mat'],'e','p1','p2','c');
+if (exist([kname '.' num2str(k) 'hyg.mat'],'file'))
+    load([kname '.' num2str(k) 'hyg.mat'],'e','p1','p2','c');
 else
     % effect size
     e = [];
-    sd = std(rates(~isnan(rates)),1);
     parfor i = 1:size(X,1)
         j = full((X(i,:)>0)');
-        i0 = (j==0).*(~isnan(rates))==1;
-        i1 = (j==1).*(~isnan(rates))==1;
+        i0 = (~isnan(labels));
+        i1 = (j==1).*(~isnan(labels))==1;
         if ((sum(i0)>=min_test)*(sum(i1)>=min_test) == 1)
-            e(i) = (mean(rates(i1)) - mean(rates(i0)))./sd;
+            e(i) = 100*sum(labels(i1))./sum(i1) - 100*sum(labels(i0))./sum(i0);
         else
             e(i) = NaN;
         end
@@ -138,17 +130,12 @@ else
     c = [];
     parfor i = 1:size(X,1)
         j = full((X(i,:)>0)');
-        i0 = (j==0).*(~isnan(rates))==1;
-        i1 = (j==1).*(~isnan(rates))==1;
+        i0 = (~isnan(labels));
+        i1 = (j==1).*(~isnan(labels))==1;
         if ((sum(i0)>=min_test)*(sum(i1)>=min_test) == 1)
             c(i) = sum(i1);
-            if (strcmp(test,'mw') > 0)
-                p1(i) = ranksum(rates(i0),rates(i1),'tail','right');
-                p2(i) = ranksum(rates(i0),rates(i1),'tail','left');
-            elseif (strcmp(test,'ks') > 0)
-                [~,p1(i)] = kstest2(rates(i0),rates(i1),'tail','smaller');
-                [~,p2(i)] = kstest2(rates(i0),rates(i1),'tail','larger');
-            end
+            p1(i) = hypergeometric_pvalue(sum(labels(i1)),sum(i0),sum(i1),sum(labels(i0)),1);
+            p2(i) = hypergeometric_pvalue(sum(labels(i1)),sum(i0),sum(i1),sum(labels(i0)),0);
         else
             c(i) = NaN;
             p1(i) = NaN;
@@ -157,6 +144,6 @@ else
     end
 
     % save results
-    save([kname '.' num2str(k) test '.mat'],'e','p1','p2','c');
+    save([kname '.' num2str(k) 'hyg.mat'],'e','p1','p2','c');
 end
 num2cell([k sum(isnan(e)) nanmean(round(e,2))])

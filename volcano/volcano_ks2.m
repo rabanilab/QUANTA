@@ -53,22 +53,25 @@ end
 W = [Yrows num2cell([Q1;Q2;C;E])'];
 
 i = (Q1<ALPHA);
-write_text_file([kname '.larger.txt'],sortrows(W(i,:),2));
+write_text_file([kname '.ks2.larger.txt'],sortrows(W(i,:),2));
 W1 = W(i,:);
 i = (Q1<ALPHA).*(E>=ESIZE)==1;
-write_text_file([kname '.e.larger.txt'],sortrows(W(i,:),2));
+write_text_file([kname '.ks2.e.larger.txt'],sortrows(W(i,:),2));
 
 i = (Q2<ALPHA);
-write_text_file([kname '.smaller.txt'],sortrows(W(i,:),3));
+write_text_file([kname '.ks2.smaller.txt'],sortrows(W(i,:),3));
 W2 = W(i,:);
 i = (Q2<ALPHA).*(E<=-1*ESIZE)==1;
-write_text_file([kname '.e.smaller.txt'],sortrows(W(i,:),3));
+write_text_file([kname '.ks2.e.smaller.txt'],sortrows(W(i,:),3));
 
 h = plot_volcano(E,Q1,Q2,Yrows,ALPHA,ESIZE,50,e_lim,p_lim);
 xlabel('effect size (fold-difference #1 - #2, log2)');
 title('all kmers');
-saveas(h, [kname '.all_seq.jpg'],'jpg');
-saveas(h, [kname '.all_seq.eps'],'epsc');
+saveas(h, [kname '.ks2.all_seq.jpg'],'jpg');
+set(gcf, 'PaperUnits', 'centimeters');
+set(gcf, 'PaperPosition', [0 0 10 10]); % x_width=10cm y_width=10cm
+saveas(h, [kname '.ks2.all_seq.svg'],'svg');
+%saveas(h, [kname '.ks2.all_seq.eps'],'epsc');
 
 close all;
 
@@ -91,8 +94,8 @@ rate1 = rate1(j2(j2>0),:);
 rate2 = rate2(j2(j2>0),:);
 fprintf('intersect k=%d: %d ids overlap, %d kmers\n',k,max(size(gid)),size(X,1));
 
-if (exist([kname '.' num2str(k) '.mat'],'file'))
-    load([kname '.' num2str(k) '.mat'],'e','p1','p2','c');
+if (exist([kname '.' num2str(k) 'ks2.mat'],'file'))
+    load([kname '.' num2str(k) 'ks2.mat'],'e','p1','p2','c');
 else
     % effect size
     e = [];
@@ -124,7 +127,7 @@ else
             p2(i) = NaN;
         end
     end
-    save([kname '.' num2str(k) '.mat'],'e','p1','p2','c');
+    save([kname '.' num2str(k) 'ks2.mat'],'e','p1','p2','c');
 end
 
 num2cell([k sum(isnan(e)) nanmean(round(e,2))])

@@ -1,10 +1,13 @@
-function h = pwm_logo(PWM,N,AB)
+function h = pwm_logo(PWM,N,AB,hdl)
 
 if (nargin < 2)
     N = 1000;
 end
 if (nargin < 3)
     AB = 'ACGU';
+end
+if (nargin < 4)
+    hdl = [];
 end
 
 % generate random sequences
@@ -21,5 +24,8 @@ for i = 1:size(PWM,2)
 end
 
 % display logo
-[~,h] = seqlogo(S);
-colorbar;
+if (isempty(hdl))
+    [~,h] = SeqLogoFig(S,'CUTOFF',0.1);
+else
+    SeqLogoFig(S,'CUTOFF',0.1,'AXES_HANDLE',hdl);
+end

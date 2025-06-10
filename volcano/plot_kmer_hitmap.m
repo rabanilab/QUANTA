@@ -1,4 +1,4 @@
-function [h,I] = plot_kmer_hitmap(all_seq,E,P,fname,rowSort,thrP,thrE,mxP,mxE,I)
+function [h,I] = plot_kmer_hitmap(all_seq,E,P,fname,rowSort,thrP,thrE,mxP,mxE,I,heatmap_color)
 
 if (nargin < 5)
     rowSort = 0; % sort rows by: 0=effect-size; 1=pvalues; 2=kmers
@@ -25,7 +25,9 @@ end
 % 3: orange,white,blue
 % 4: red,white,orange
 % 5: brown,white,green
-heatmap_color = 5;
+if (nargin < 11)
+    heatmap_color = 5;
+end
 
 % maximal number of rows to add text for kmers
 maxText = 200;
