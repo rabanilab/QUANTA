@@ -15,6 +15,9 @@ end
 all_data_c = cellstr(S.data_c);
 mzt_class = S.mzt_class;
 mzt_fit = S.mzt_fit;
+kmer_range = S.kmer_range;
+kmer_alpha = S.kmer_alpha;
+kmer_esize = S.kmer_esize;
 kmer_dir = S.kmer_dir{1};
 seq_file = S.seq_file{1};
 data_dir = S.data_dir{1};
@@ -46,13 +49,13 @@ nc = max(size(all_data_c));
 Y = importdata(gene_file);
 maxN = max(nr,na);
 
-log(2)./[mzt_fit(3) 0.03*mzt_fit(3)]
-log(2)./[-0.03*mzt_fit(3) 0.03*mzt_fit(3)]
+% do not use organism specific timing
+mzt_fit = [];
 
 % ---------------------------------------------------------------------
 % FPKM data
 % ---------------------------------------------------------------------
-load_fpkm = 1;
+load_fpkm = 0;
 
 if (load_fpkm)
     F = importdata(list_file);
@@ -119,7 +122,7 @@ all_data_c
 % normalize expression by stable controls
 % select expressed genes by maximal expression
 % ---------------------------------------------------------------------
-norm_fpkm = 1;
+norm_fpkm = 0;
 
 if (norm_fpkm)
     load('data.fpkm.mat');
@@ -339,7 +342,7 @@ end
 % ---------------------------------------------------------------------
 % classification
 % ---------------------------------------------------------------------
-classify_genes = 1;
+classify_genes = 0;
 
 if (classify_genes)
     load('data.norm.mat');
@@ -398,8 +401,10 @@ if (classify_genes)
         end
         
         C(:,i) = isM + 2*isZ;
-        y = hist(C(:,i),0:3);
+        H = cellfun(@isempty,regexp(G2,'^[Hh][1234]'));
+        C(H==0,i) = 0;
         
+        y = hist(C(:,i),0:3);
         fprintf('classify: %s\n', all_data_c{i});
         [{'NA' 'M' 'Z' 'MZ'}; num2cell(y); num2cell(y./sum(y))]'
     
@@ -485,7 +490,7 @@ end
 % ---------------------------------------------------------------------
 % combined classification
 % ---------------------------------------------------------------------
-class_plot = 1;
+class_plot = 0;
 
 if (class_plot == 1)
     S = {'M' 'Z' 'MZ'};
@@ -680,7 +685,7 @@ nmtid = size(mtid,1);
 % ---------------------------------------------------------------------
 % expression data: stable genes
 % ---------------------------------------------------------------------
-plot_controls = 1;
+plot_controls = 0;
 
 if (plot_controls)
     load('gene_classification.mat','allid');
@@ -731,7 +736,7 @@ end
 % ---------------------------------------------------------------------
 % expression data: plot examples
 % ---------------------------------------------------------------------
-plot_examples = 1;
+plot_examples = 0;
 
 if (plot_examples)
     load('gene_classification.mat','mtid','ztid','allid');
@@ -817,22 +822,51 @@ end
 % ---------------------------------------------------------------------
 % model fits
 % ---------------------------------------------------------------------
-model_fit = 1;
+model_fit = 0;
 
 if (model_fit == 1)
     load('gene_classification.mat','mtid');
 
     % fit 1-rate model
-    run_fit(mtid,[all_data_r all_data_a],mzt_fit(2:3),fpkm_pref);
-    
+    if (isempty(mzt_fit))
+        run_fit(mtid,[all_data_r all_data_a],[],fpkm_pref);
+    else
+        run_fit(mtid,[all_data_r all_data_a],mzt_fit(2:3),fpkm_pref);
+    end
+
     % fit 2-rate model
-    run_fit_2p(mtid,[all_data_r all_data_a],mzt_fit,fpkm_pref);
+    if (isempty(mzt_fit))
+        run_fit_2p(mtid,[all_data_r all_data_a],[],fpkm_pref);
+    else
+        run_fit_2p(mtid,[all_data_r all_data_a],mzt_fit,fpkm_pref);
+    end
 end
+
+% ---------------------------------------------------------------------
+% STD
+% ---------------------------------------------------------------------
+% s = [];
+% for j = 1:nr
+%     [D,~,iM,~,~,tid] = load_data([fpkm_pref all_data_r{j} '.txt']);
+%     [~,k2] = ismember(mtid,tid); %[tid(k2(k2>0) mtid(k1))]
+%     y = D(k2(k2>0),iM);
+%     y = y - y(:,1);
+%     s(j) = sum(sum((y(:,1:end-1)-y(:,2:end)).^2))/(size(y,1)*(size(y,2)-1));
+% end
+% for j = 1:na
+%     [D,~,iM,~,~,tid] = load_data([fpkm_pref all_data_a{j} '.txt']);
+%     [~,k2] = ismember(mtid,tid); %[tid(k2(k2>0) mtid(k1))]
+%     y = D(k2(k2>0),iM);
+%     y = y - y(:,1);
+%     s(nr+j) = sum(sum((y(:,1:end-1)-y(:,2:end)).^2))/(size(y,1)*(size(y,2)-1));
+% end
+% [[all_data_r'; all_data_a'] num2cell(s')]
+% mean(s)
 
 % ---------------------------------------------------------------------
 % test model fit
 % ---------------------------------------------------------------------
-test_model_fit = 1;
+test_model_fit = 0;
 
 if (test_model_fit)
     mkdir('results/model_fit');
@@ -855,6 +889,7 @@ if (test_model_fit)
     end
     h = fit_model_plot_param(mP1,[all_data_r all_data_a]);
     saveas(h, 'results/model_fit/test.1p.param.jpg','jpg');
+    %saveas(h, 'results/model_fit/test.1p.param.svg','svg');
     model_test_fit([all_data_r all_data_a],mtid,mP1,mE1,mR1,1,'results/model_fit/test.1p',minR2,maxERR,[],fpkm_pref);
     close all;
 
@@ -1012,7 +1047,7 @@ end
 % ---------------------------------------------------------------------
 % average model fits across datasets
 % ---------------------------------------------------------------------
-model_average = 1;
+model_average = 0;
 
 if (model_average == 1)
     load('maternal_param.mat','mtid','Pa','Pr','Ra','Rr','Ea','Er','Ja','Jr');
@@ -1192,13 +1227,13 @@ if (model_average == 1)
     saveas(h,'results/param.avg.zfish.jpg','jpg');
     saveas(h,'results/param.avg.zfish.eps','epsc');
     
-    load('../../project_utrseq/utrseq_dT/Results/analyze_20180129/maternal_param.avg.mat','R0','R40');
-    X{3} = [R0(:,5) R0(:,4) R0(:,1) R0(:,3) nan(size(R0,1),1)];
-    X{4} = [R40(:,5) R40(:,4) R40(:,1) R40(:,3) nan(size(R40,1),1)];
-    h = fit_model_2p_plot_param(X,{'avg' 'zfish' 'A-' 'A+'},{'id' 'x0' 'da' 'dg' 't0' 'n/a'},[-3 -3 0.1 0 -1],[12 3 3 11 1]);
-    xlabel('n/a');
-    saveas(h,'results/param.avg.all.jpg','jpg');
-    saveas(h,'results/param.avg.all.eps','epsc');
+    %load('../../project_utrseq/utrseq_dT/Results/analyze_20180129/maternal_param.avg.mat','R0','R40');
+    %X{3} = [R0(:,5) R0(:,4) R0(:,1) R0(:,3) nan(size(R0,1),1)];
+    %X{4} = [R40(:,5) R40(:,4) R40(:,1) R40(:,3) nan(size(R40,1),1)];
+    %h = fit_model_2p_plot_param(X,{'avg' 'zfish' 'A-' 'A+'},{'id' 'x0' 'da' 'dg' 't0' 'n/a'},[-3 -3 0.1 0 -1],[12 3 3 11 1]);
+    %xlabel('n/a');
+    %saveas(h,'results/param.avg.all.jpg','jpg');
+    %saveas(h,'results/param.avg.all.eps','epsc');
 
     Y = cell(1,2);
     Y{1} = [nanmean(Mr_x0,2) nan(nmtid,1) nanmean(Mr_dg,2) nanmean(Mr_t0,2) nan(nmtid,1)];
@@ -1224,7 +1259,7 @@ if (model_average == 1)
     title(sprintf('all (n=%d):\n',nmtid));
     legend({'ribo' 'polya'},'location','northoutside','box','off');
     subplot(1,3,2);
-    k = Y{2}(:,2) < -0.2;
+    k = Y{2}(:,2) < -0.15;%-0.2;
     fprintf('deA < 0, polyadenylation (n=%d):\n',sum(k));
     S = [];
     for i = [1 3 4]
@@ -1237,7 +1272,7 @@ if (model_average == 1)
     title(sprintf('deA < 0, polyadenylation (n=%d):\n',sum(k)));
     legend({'ribo' 'polya'},'location','northoutside','box','off');
     subplot(1,3,3);
-    k = Y{2}(:,2) > 0.2;
+    k = Y{2}(:,2) > 0.15;%0.2;
     fprintf('deA > 0, deadenylation (n=%d):\n',sum(k));
     S = [];
     for i = [1 3 4]
@@ -1362,10 +1397,33 @@ if (model_average == 1)
         title(sprintf('n=%d, r=%.2f',sum(i),corr(x1(i,1),x3(i,1))));
         set(gca,'fontsize',16);
         saveas(h, 'results/compare_pa_rz/dg.pa.2.jpg','jpg');
+
+        % deadenylation rate relative to expression
+        h = figure;
+        scrsz = get(0,'ScreenSize');
+        set(h, 'OuterPosition',[1 scrsz(4) scrsz(3) scrsz(4)]);
+        c = corr(Rx,R(:,4),'rows','pairwise');
+        for i = 1:4
+            subplot(2,2,i);
+            x = R(:,4);
+            y = Rx(:,i);
+            y(y<-6) = -6;
+            k = (~isnan(x)).*(~isnan(y))==1;
+            dscatter(x(k),y(k),'MSIZE',25);
+            axis square;
+            xlabel('dA rate');
+            ylabel(sprintf('polyA/Total ratio (t=%d hr)',i-1));
+            title(sprintf('n=%d,r=%.2f',sum(k),c(i)));
+            set(gca,'xlim',[-3 3],'ylim',[-6 4],'fontsize',16);
+            hold on;
+            line([0 0],[-6 4],'LineStyle','-','color','k','linewidth',1);
+            hold off;
+        end
+        saveas(h, 'results/compare_da.jpg','jpg');
     end
 
     % plot examples
-    mkdir('results/model_examples');    
+    mkdir('results/model_examples');
     R2r = [];
     for j = 1:nr
         R2r(:,j) = Rr{j};
@@ -1390,7 +1448,7 @@ if (model_average == 1)
     if (sum(k)>0)
         j = find(k);
         last = min(sum(k),10);
-        plot_ids(mtid(j(1:last)),all_data_a,all_data_r,'results/model_examples/fit_',1,0,mzt_fit,0,fpkm_pref);
+        plot_ids(mtid(j(1:last)),all_data_a,all_data_r,'results/model_examples/fit_',1,0,mzt_fit,1,fpkm_pref);
     end
     
     maxR2 = max(prctile([R2r R2a],10));%0.3;
@@ -1450,7 +1508,7 @@ end
 % ---------------------------------------------------------------------
 % expression data: plot data
 % ---------------------------------------------------------------------
-plot_data = 1;
+plot_data = 0;
 
 if (plot_data)
     load('maternal_param.mat','mtid','Pa','Pr');
@@ -1620,7 +1678,7 @@ end
 % ---------------------------------------------------------------------
 % fold change
 % ---------------------------------------------------------------------
-plot_fold = 1;
+plot_fold = 0;
 
 if (plot_fold)
     load('maternal_param.avg.mat','mtid');
@@ -1906,16 +1964,22 @@ end
 % ---------------------------------------------------------------------
 % plot known kmers
 % ---------------------------------------------------------------------
-plot_kmer_known = 1;
-plot_kmer_known_individual_param = 1;
+plot_kmer_known = 0;
+plot_kmer_known_individual_param = 0;
 
 if (plot_kmer_known)
-    Kids = {'GCACTT' 'TATTTAT' 'TGTA.ATA' ...
-        'TTTTTT' 'TTAGTT' 'TTTTAT' ...
-        'AATAAA' 'AAAAAA[AG]' 'CCCCCC' ...
-        'CTCC|CCTC' 'GTGTGT|TGTGTG'};
+    Kids = {'GCACTT' 'TATTTAT' 'TATTAT' 'TGTA.ATA' ...
+        'TTTTT' 'TTTTTT' 'TTTTTTT' ...
+        'TTTTAT' 'TTTTTA' 'TTTTAGT' ...
+        'AAAA' 'AAAAA' 'AAAAAA' 'AAAAAAA' ...
+        'AATAAA' 'AAAATA' 'AAATAA' 'ATAAAA'...
+        'AAGAAA' 'AAAAGA' 'AAAGAA' 'AGAAAA' ...
+        'CCCC' 'CCCCC' 'CCCCCC' ...
+        'GGGG' 'GGGGG' 'GGGGGG' ...
+        'CTCC|CCTC' 'CACA|ACAC' ...
+        'CCCCG' 'CCGGG' 'CCCCAG' 'CTGC|CCTG|CTGG|GCTG'}; % xenopus
     load('maternal_param.avg.mat','mtid','R','Rx','Rx_id', ...
-        'Mr_dg','Ma_dg','Ma_da','Mr_t0','Ma_t0','Mr_x0','Ma_x0');
+        'Mr_dg','Ma_dg','Ma_da','Mr_t0','Ma_t0','Mr_x0','Ma_x0','Xa','Xr');
 
     % load sequences
     f = fopen(seq_file);
@@ -1927,77 +1991,59 @@ if (plot_kmer_known)
     [~,j1,j2] = intersect(mtid,Sid);
     Sid = Sid(j2(j2>0));
     S = S(j2(j2>0));
-    
+
+    % for i = 1:max(size(Kids))
+    %     k = cellfun(@isempty,regexp(S,Kids{i})) == 0;
+    %     write_text_file(['results/kmer_known/' Kids{i} '_genes.txt'], Sid(k));
+    % end
+
     % all
     mkdir('results/kmer_known');
-    Di = {'x0r' 'x0a' 'da' 't0r' 't0a' 'dgr' 'dga'};
-    D = [nanmean(Mr_x0,2) nanmean(Ma_x0,2) R(:,4) nanmean(Mr_t0,2) nanmean(Ma_t0,2) nanmean(Mr_dg,2) nanmean(Ma_dg,2)];
-    D = D - min(D);
-    D = 10*D./max(D);
+    Di = {'x0r' 'x0a' 't0r' 't0a' 'dgr' 'dga' 'da'};
+    D = [nanmean(Mr_x0,2) nanmean(Ma_x0,2) nanmean(Mr_t0,2) nanmean(Ma_t0,2) nanmean(Mr_dg,2) nanmean(Ma_dg,2) nanmean(Ma_da,2)];
+    D = scale_param(D);
     k = sum(~isnan(D)) > 10;
-    plot_known_kmers(Sid,S,Kids,D(j1,k),Di(k),'results/kmer_known/all','scaled param (a.u.)',[0 10],0.5,0);
+    plot_known_kmers(Sid,S,Kids,D(j1,k),Di(k),'results/kmer_known/all','scaled param (a.u.)',[0 10],0.5);
+    plot_known_kmers(Sid,S,Kids,D(j1,k),Di(k),'results/kmer_known/all.box','scaled param (a.u.)',[0 10],0.5,4,1);
+
+    % Ratio
     if ((nr>0)*(na>0)==1)
-        plot_known_kmers(Sid,S,Kids,Rx(j1,:),Rx_id,'results/kmer_known/r','A/T ratio',[-5 5],0.5,0);
+        plot_known_kmers(Sid,S,Kids,Rx(j1,:),Rx_id,'results/kmer_known/r','A/T ratio',[-2 1],0.5);
+        plot_known_kmers(Sid,S,Kids,Rx(j1,:),Rx_id,'results/kmer_known/r','A/T ratio',[-2 1],0.5,4,1);
     end
 
     if ((nr+na > 1) && (plot_kmer_known_individual_param))
-        % X0
+        % X0l
         D = [Mr_x0 Ma_x0];
         Di = [all_data_r all_data_a];
-        plot_known_kmers(Sid,S,Kids,D(j1,1:(nr+na)),Di,'results/kmer_known/x0','logX0',[-5 12],0.5,0);
+        plot_known_kmers(Sid,S,Kids,D(j1,1:(nr+na)),Di,'results/kmer_known/x0','logX0',[-5 12],0.5);
         
         % dA rate
         if (na > 0)
             D = Ma_da;
             Di = all_data_a;
-            plot_known_kmers(Sid,S,Kids,D(j1,1:na),Di,'results/kmer_known/da','deA rate (1/hr)',[-3 3],0.2,0);
+            plot_known_kmers(Sid,S,Kids,D(j1,1:na),Di,'results/kmer_known/da','deA rate (1/hr)',[-3 3],0.2);
         end
 
         % degradation rate
         D = [Mr_dg Ma_dg];
         Di = [all_data_r all_data_a];
-        plot_known_kmers(Sid,S,Kids,D(j1,1:(nr+na)),Di,'results/kmer_known/dg','dg rate (1/hr)',[0 3],0.1,0);
+        plot_known_kmers(Sid,S,Kids,D(j1,1:(nr+na)),Di,'results/kmer_known/dg','dg rate (1/hr)',[0 3],0.1);
         
         % onset time
         D = [Mr_t0 Ma_t0];
         Di = [all_data_r all_data_a];
-        plot_known_kmers(Sid,S,Kids,D(j1,1:(nr+na)),Di,'results/kmer_known/t0','onset (hr)',[0 7],0.5,0);
+        plot_known_kmers(Sid,S,Kids,D(j1,1:(nr+na)),Di,'results/kmer_known/t0','onset (hr)',[0 7],0.5);
     end
-
-    % Sp = cell(size(S));
-    % Si = cell(size(S));
-    % Sq = cell(size(S));
-    % for i = 1:size(S,1)
-    %     pi = [];
-    %     qi = [];
-    %     ii = [];
-    %     for j = 1:max(size(Kids))
-    %         p = regexp(S{i},Kids{j});
-    %         q = repmat(Kids(j),size(p));
-    %         pi = [pi p];
-    %         qi = [qi q];
-    %         ii = [ii j*ones(size(p))];
-    %     end
-    %     [~,j] = sort(pi);
-    %     Sp{i} = pi(j);
-    %     Sq{i} = qi(j);
-    %     Si{i} = ii(j);
-    % end
-    % [Sq{299}' num2cell([Si{299}' Sp{299}'])]
 end
 
 % ---------------------------------------------------------------------
 % expression data: kmer enrichments
 % ---------------------------------------------------------------------
 plot_kmer = 1;
-plot_kmer_individual_param = 1;
+plot_kmer_individual_param = 0;
 
 if (plot_kmer)
-    kmer_range = 4:7;
-    alpha = 0.01;
-    esize = 0.2;%0.3;
-    prange = [0 10];
-    erange = [-1 1];
     load('maternal_param.avg.mat','mtid','R','Rx','Rx_id', ...
         'Mr_dg','Ma_dg','Ma_da','Mr_t0','Ma_t0','Mr_x0','Ma_x0');
     
@@ -2013,60 +2059,46 @@ if (plot_kmer)
     S = S(j2(j2>0));
     
     % all
-    Pid = {'x0r' 'x0a' 'pa' 'da' 't0r' 't0a' 'dgr' 'dga'};
-    da1 = R(:,4); % polyadenylation
-    da1(da1>0) = nan;
-    da2 = R(:,4); % deadenylation
-    da2(da2<0) = nan;
-    Pall = [nanmean(Mr_x0,2) nanmean(Ma_x0,2) -1*da1 da2  nanmean(Mr_t0,2) nanmean(Ma_t0,2) nanmean(Mr_dg,2) nanmean(Ma_dg,2)];
+    Pid = {'x0r' 'x0a' 't0r' 't0a' 'dgr' 'dga' 'da'};
+    Pall = [nanmean(Mr_x0,2) nanmean(Ma_x0,2) nanmean(Mr_t0,2) nanmean(Ma_t0,2) nanmean(Mr_dg,2) nanmean(Ma_dg,2) nanmean(Ma_da,2)];
     k = sum(~isnan(Pall)) > 10;
+    kmers_all(mtid(j1),S,Pall(j1,k),Pid(k),'results/kmer_all',kmer_range,kmer_dir,kmer_esize,kmer_alpha);
+
+    % Ratio
     if ((nr>0)*(na>0)==1)
-        kmers_all(mtid(j1),S,[Pall(j1,k) Rx(j1,:)],[Pid(k) Rx_id],'results/kmer_all',kmer_range,kmer_dir,esize,alpha,erange,prange);
-    else
-        kmers_all(mtid(j1),S,Pall(j1,k),Pid(k),'results/kmer_all',kmer_range,kmer_dir,esize,alpha,erange,prange);
+        kmers_all(mtid(j1),S,Rx(j1,:),Rx_id,'results/kmer_r',kmer_range,kmer_dir,kmer_esize,kmer_alpha);
     end
-    
-    if ((nr+na > 1) && (plot_kmer_individual_param))
+
+    if ((nr>1 || na>1) && (plot_kmer_individual_param))
         % X0
         if (na>0)
             x = [Mr_x0 Ma_x0];
-            kmers_all(mtid(j1),S,x(j1,:),[all_data_r all_data_a],'results/kmer_x0',kmer_range,kmer_dir,esize,alpha,erange,prange);
+            kmers_all(mtid(j1),S,x(j1,:),[all_data_r all_data_a],'results/kmer_x0',kmer_range,kmer_dir,kmer_esize,kmer_alpha);
         else
-            kmers_all(mtid(j1),S,Mr_x0(j1,:),all_data_r,'results/kmer_x0',kmer_range,kmer_dir,esize,alpha,erange,prange);
+            kmers_all(mtid(j1),S,Mr_x0(j1,:),all_data_r,'results/kmer_x0',kmer_range,kmer_dir,kmer_esize,kmer_alpha);
         end
         
         % pA rate
         if (na>0)
-            pa = Ma_da(j1,:);
-            pa(pa>0) = nan;
-            w = size(pa,1)-sum(isnan(pa),1) >= 10;
-            if (sum(w)>0)
-                kmers_all(mtid(j1),S,-1*pa(:,w),all_data_a(w),'results/kmer_pa',kmer_range,kmer_dir,esize,alpha,erange,prange);
-            end
-
-            da = Ma_da(j1,:);
-            da(da<0) = nan;
-            w = size(da,1)-sum(isnan(da),1) >= 10;
-            if (sum(w)>0)
-                kmers_all(mtid(j1),S,da(:,w),all_data_a(w),'results/kmer_da',kmer_range,kmer_dir,esize,alpha,erange,prange);
-            end
+            pa = Ma_da;
+            kmers_all(mtid(j1),S,pa(j1,:),all_data_a,'results/kmer_da',kmer_range,kmer_dir,kmer_esize,kmer_alpha);
         end
         
         % degradation rate
         if (na>0)
             d = [Mr_dg Ma_dg];
-            kmers_all(mtid(j1),S,d(j1,:),[all_data_r all_data_a],'results/kmer_dg',kmer_range,kmer_dir,esize,alpha,erange,prange);
+            kmers_all(mtid(j1),S,d(j1,:),[all_data_r all_data_a],'results/kmer_dg',kmer_range,kmer_dir,kmer_esize,kmer_alpha);
         else
-            kmers_all(mtid(j1),S,Mr_dg(j1,:),all_data_r,'results/kmer_dg',kmer_range,kmer_dir,esize,alpha,erange,prange);
+            kmers_all(mtid(j1),S,Mr_dg(j1,:),all_data_r,'results/kmer_dg',kmer_range,kmer_dir,kmer_esize,kmer_alpha);
         end
         
         % onset time
-        % less accurate so require larger effect size
+        % less accurate so require a larger effect size
         if (na>0)
             t = [Mr_t0 Ma_t0];
-            kmers_all(mtid(j1),S,t(j1,:),[all_data_r all_data_a],'results/kmer_t0',kmer_range,kmer_dir,esize,alpha,erange,prange);
+            kmers_all(mtid(j1),S,t(j1,:),[all_data_r all_data_a],'results/kmer_t0',kmer_range,kmer_dir,kmer_esize,kmer_alpha);
         else
-            kmers_all(mtid(j1),S,Mr_t0(j1,:),all_data_r,'results/kmer_t0',kmer_range,kmer_dir,esize,alpha,erange,prange);
+            kmers_all(mtid(j1),S,Mr_t0(j1,:),all_data_r,'results/kmer_t0',kmer_range,kmer_dir,kmer_esize,kmer_alpha);
         end   
     end
 end
@@ -2128,11 +2160,6 @@ for j = 1:max(size(all_data))
             parfor i = 1:size(y,1)
                 [P(i,:),E(i,:),~,R(i,:)] = fit_model_2p(x,y(i,:),mzt);
             end
-        elseif (size(x,2)>=4)
-            parfor i = 1:size(y,1)
-                [p,E(i,:),~,R(i,:)] = fit_model(x,y(i,:),mzt(2:3));
-                P(i,:) = [p(1) 0 p(2:4)];
-            end
         end
         mP = nan(mN,size(P,2));
         mP(k1,:) = P;
@@ -2146,3 +2173,18 @@ for j = 1:max(size(all_data))
     k = sum(~isnan(mP(:,1)));
     fprintf('fitted model 2p: fit %d out of %d (%.1f%%)\n',k,mN,100*k/mN);
 end
+
+function nD = scale_param(D)
+% D = ['x0r' 'x0a' 't0r' 't0a' 'dgr' 'dga' 'da']
+
+xmax = max(max(D(:,[1 2])));
+xmin = min(min(D(:,[1 2])));
+tmax = max(max(D(:,[3 4])));
+tmin = 0;
+dmax = max(max(D(:,[5 6])));
+dmin = min(min(D(:,[5 6])));
+rmax = max(abs(D(:,7)));
+rmin = -1*rmax;
+Dmin = [xmin xmin tmin tmin dmin dmin rmin];
+Dmax = [xmax xmax tmax tmax dmax dmax rmax];
+nD = 10*(D - Dmin)./(Dmax - Dmin);

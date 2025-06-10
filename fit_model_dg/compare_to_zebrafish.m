@@ -4,7 +4,7 @@ if (nargin < 3)
     drange = [-7 2];
 end
 if (nargin < 4)
-    all_names = {'dazl' 'sod2' 'h1m' 'btg4' 'zar1' 'buc' 'wee2'};
+    all_names = {'dazl' 'sod2' 'h1m' 'btg4' 'cpeb1' 'zar1' 'buc' 'wee2'};
 end
 
 zfish_mzt = 3.5;
@@ -68,6 +68,6 @@ A = importdata('../1_zebrafish_Nov2023/gene_classification.txt');
 zid = A.textdata(j2(j2>0),2);
 
 h = plot_compare_dg(x,y,zid,all_names,orgid,drange);
-saveas(h, 'results/orthologies.dg.jpg','jpg');
+saveas(h, 'results/orthologies.dg.svg','svg');
 
 close all;

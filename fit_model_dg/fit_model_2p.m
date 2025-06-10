@@ -1,12 +1,12 @@
-function [P,E,X,R] = fit_model_2p(t, x, mzt, k, LB, UB)
+function [P,E,X,R] = fit_model_2p(t, x, timeB, k, LB, UB)
 % t = times
 % x = expression levels
-% mzt = [min mzt time] [max mzt time] [min offset time]
+% timeB = [min switch time] [max switch time] [min offset time]
 %
 % P = <logX0,dg1,dg2,t0,t1>
 
 if (nargin < 3)
-    mzt = [3 6 6];
+    timeB = [];
 end
 if (nargin < 4)
     k = 10;
@@ -29,19 +29,26 @@ if (sum(i) < 5)
     [LB;UB]
 end
 
+% timeB = [min switch time] [max switch time] [min offset time]
+if (isempty(timeB))
+    timeB(1) = 0.2*max(t(i));
+    timeB(2) = 0.6*max(t(i));
+    timeB(3) = 0.6*max(t(i));
+end
+
 % boundary conditions
 if (isempty(LB)||isempty(UB))
     mnT = max(min(t(i)),0);
-    mnT = max(mnT,mzt(1));
     mxT = max(max(t(i)),6);
+    mnZ = max(mnT,timeB(1));
 
-    %log(2)./[mzt(3) 0.03*mzt(3)]
-    %log(2)./[-0.03*mzt(3) 0.03*mzt(3)]
-    mxH = mzt(3);
-    mnH = 0.03*mxH;
+    mxH = mxT;%timeB(3);
+    mnH = 0.03*mxT;%0.03*mxH
+    %DG: log(2)./[mxH mnH]
+    %DA: log(2)./[-mnH mnH]
 
-    LB = [-9 -1*log(2)/mnH log(2)/mxH  mnT  mzt(3)];
-    UB = [15  log(2)/mnH log(2)/mnH mzt(2) mxT+1];
+    LB = [-9 -1*log(2)/mnH log(2)/mxH   mnZ   timeB(3)];
+    UB = [15    log(2)/mnH log(2)/mnH timeB(2) mxT+1];
     if (UB(4) > mxT)
         UB(4) = mxT;
     end
@@ -52,8 +59,8 @@ if (isempty(LB)||isempty(UB))
     
     nt = max(size(unique(t(i))));
     if (nt < 3)
-        LB(4) = mnT;
-        UB(4) = mnT;
+        LB(4) = mnZ;
+        UB(4) = mnZ;
         UB(2) = 0;
         LB(2) = 0;
     end

@@ -86,7 +86,13 @@ else
 end
 
 fprintf('input: %d kmers, %d properties\n',size(P_all));
-Dnames = regexprep(cellstr(num2str((1:sum(n))'))',' ','');
+Dnames = [];
+ORG = {'Z' 'X' 'M' 'H'};
+for i = 1:max(size(n))
+    w = regexprep(cellstr(num2str((1:n(i))'))',' ','');
+    w = strcat(repmat(ORG(i),n(i),1),w')';
+    Dnames = [Dnames w];
+end
 if (~isempty(order))
     P_all = P_all(:,order);
     E_all = E_all(:,order);

@@ -34,7 +34,7 @@ for i = 1:max(size(all_ids))
     title([gname ' (polyA)']);
     set(gca,'ylim',[-3 15],'xlim',[0 mxT+0.5],'fontsize',15);
     if (feps > 0)
-        set(gca,'ylim',[-3 10]);
+        %set(gca,'ylim',[-3 10]);
         axis square;
         legend(Q(Q>0),S(Q>0),'box','off','location','northoutside');
     end
@@ -50,7 +50,7 @@ for i = 1:max(size(all_ids))
     title([gname ' (ribo)']);
     set(gca,'ylim',[-3 15],'xlim',[0 mxT+0.5],'fontsize',15);
     if (feps > 0)
-        set(gca,'ylim',[-3 10]);
+        %set(gca,'ylim',[-3 10]);
         axis square;
         legend(Q(Q>0),S(Q>0),'box','off','location','northoutside');
     end
@@ -59,7 +59,8 @@ for i = 1:max(size(all_ids))
     if (~isempty(gname))
         saveas(h, [pref gname '.jpg'],'jpg');
         if (feps > 0)
-            saveas(h, [pref gname '.eps'],'epsc');
+            saveas(h, [pref gname '.svg'],'svg');
+            %saveas(h, [pref gname '.eps'],'epsc');
         end
     else
         saveas(h, [pref all_ids{i} '.EMPTY.jpg'],'jpg');
@@ -100,9 +101,9 @@ for j = 1:max(size(all_data_a))
         plot(x,y,'.','markersize',35,'color',C(j,:));
         if (run_mfit)
             if (size(x,2)>=5)
-                P = fit_model_2p(x,y,mzt);
+                P = fit_model_2p(x,y,[]);%mzt);
             elseif (size(x,2)>=4)
-                P = fit_model(x,y,mzt(2:3));
+                P = fit_model(x,y,[]);%mzt(2:3));
                 P = [P(1) 0 P(2:4)];
             else
                 P = [mean(y) 0 0 0 0];
@@ -157,7 +158,7 @@ for j = 1:max(size(all_data_r))
         plot(x,y,'.','markersize',35,'color',C(j,:));
         if (run_mfit)
             if (size(x,2)>=4)
-                P = fit_model(x,y,mzt(2:3));
+                P = fit_model(x,y,[]);%mzt(2:3));
             else
                 P = [mean(y) 0 0 0];
             end

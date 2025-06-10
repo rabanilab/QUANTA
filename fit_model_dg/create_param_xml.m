@@ -1,6 +1,7 @@
-function create_param_xml(all_data_r,all_data_a,all_data_c,mzt_class,mzt_fit,...
+function create_param_xml(all_data_r,all_data_a,all_data_c,mzt_class,mzt_fit, ...
     kmer_dir,seq_file,data_dir, ...
-    class_FC,organism_array,is_mzt,cnt_gene_norm,...
+    class_FC,organism_array,is_mzt,cnt_gene_norm, ...
+    kmer_range,kmer_alpha,kmer_esize, ...
     fpkm_pref,gene_file,list_file)
 % class_FC = fold-reduction after/before that is smaller than this value is excluded
 % set to 0.5 for polyA/non-MZT datasets
@@ -20,12 +21,21 @@ if (nargin < 12)
     cnt_gene_norm = [1 0];
 end
 if (nargin < 13)
-    fpkm_pref = [data_dir '/exp_df_classified_'];
+    kmer_range = 4:7;
 end
 if (nargin < 14)
-    gene_file = [data_dir '/mart_export_filterd.txt'];
+    kmer_alpha = 0.01;
 end
 if (nargin < 15)
+    kmer_esize = 10;
+end
+if (nargin < 16)
+    fpkm_pref = [data_dir '/exp_df_classified_'];
+end
+if (nargin < 17)
+    gene_file = [data_dir '/mart_export_filterd.txt'];
+end
+if (nargin < 18)
     list_file = [data_dir '/file_list.txt'];
 end
 
@@ -36,6 +46,20 @@ docNode = com.mathworks.xml.XMLUtils.createDocument('param');
 entry_node = docNode.createElement('Entry');
 
 % write param
+node = docNode.createElement('kmer_alpha');
+nname = docNode.createTextNode(num2str(kmer_alpha));
+node.appendChild(nname);
+docNode.getDocumentElement.appendChild(node);
+node = docNode.createElement('kmer_esize');
+nname = docNode.createTextNode(num2str(kmer_esize));
+node.appendChild(nname);
+docNode.getDocumentElement.appendChild(node);
+for i = 1:max(size(kmer_range))
+    node = docNode.createElement('kmer_range');
+    nname = docNode.createTextNode(num2str(kmer_range(i)));
+    node.appendChild(nname);
+    docNode.getDocumentElement.appendChild(node);
+end
 node = docNode.createElement('kmer_dir');
 nname = docNode.createTextNode(kmer_dir);
 node.appendChild(nname);

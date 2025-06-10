@@ -1,7 +1,7 @@
 function h = fit_model_plot_param(P,Pids,PARAM_names,LB,UB)
 % P = <logX0,dg,t0,t1>
 
-n = max(size(P));
+n = max(size(Pids));
 if (nargin < 3)
     PARAM_names = {'id' 'x0' 'dg' 't0' 't1'};
 end
@@ -14,6 +14,10 @@ if (nargin < 5)
         LB = min(LB,mn);
         UB = max(UB,mx);
     end
+    %LB(2) = 0.1;
+    %UB(2) = 1.2;
+    %LB(3) = 0;
+    %UB(3) = 5;
 end
 
 fprintf('MEAN PARAM:\n');
@@ -87,7 +91,7 @@ end
 hd = round(abs(LB-UB)/35,2);
 x = LB:hd:UB;
 
-n = size(P,2);
+n = size(Pids,2);
 L = [];
 for j = 1:n
     d = P{j}(:,i);

@@ -1,7 +1,7 @@
 function h = fit_model_2p_plot_param(P,Pids,PARAM_names,LB,UB)
 % P = <logX0,dg1,dg2,t0>
 
-n = max(size(P));
+n = max(size(Pids));
 if (nargin < 3)
     PARAM_names = {'id' 'x0' 'dg' 'da' 't0' 't1'};
 end
@@ -117,7 +117,7 @@ end
 hd = round(abs(LB-UB)/35,2);
 x = LB:hd:UB;
 
-n = size(P,2);
+n = size(Pids,2);
 L = [];
 for j = 1:n
     d = P{j}(:,i);
